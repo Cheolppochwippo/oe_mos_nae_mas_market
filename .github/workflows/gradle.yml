@@ -12,60 +12,71 @@ on:
     branches: [ "dev" ]
   pull_request:
     branches: [ "dev" ]
+env:
+  PROJECT_NAME: plug-project
+  BUCKET_NAME: cheolppo
+  CODE_DEPLOY_APP_NAME: cheolppo
+  DEPLOYMENT_GROUP_NAME: cheolppo_group
 
+permissions:
+  contents: read
+
+# 수행할 작업들을 선언합니다.
 jobs:
   build:
-
+    
+    # 우분투 최신버전에서 작업을 실행
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
+    # steps 하위로 선언한 순서대로 작업을 수행합니다.
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
+   
+      # 코드 체크아웃은 저장소에서 소스코드를 가져와서 현재 작업 디렉토리에 복사하는 작업입니다.
+      # 최신 소스 코드를 가져와서 빌드, 테스트, 배포 등의 작업을 진행할 수 있습니다.
+      - name: 코드 체크아웃
+        uses: actions/checkout@v3
+        
+      # 작업한 스프링 프로젝트의 자바 버전을 설정합니다.
+      - name: JDK 17 설정
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          
+      # Gradle 스크립트 실행 전 실행 권한을 부여합니다.
+      - name: gradlew 권한 부여
+        run: chmod +x ./gradlew
+        shell: bash        
+  
+      # 스프링 프로젝트의 빌드도구인 gradle을 통해 빌드하는 설정입니다.
+      - name: Gradle로 빌드
+        uses: gradle/gradle-build-action@bd5760595778326ba7f1441bcf7e88b49de61a25 # v2.6.0
+        with:
+          arguments: build
+          
+#------------------------------------------------ 
 
-    # Configure Gradle for optimal use in GiHub Actions, including caching of downloaded dependencies.
-    # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
-
-    - name: Change gradlew permissions
-      run: chmod +x ./gradlew
-
-
-    - name: Build with Gradle Wrapper
-      run: ./gradlew build
-
-    # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
-    # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
-    #
-    # - name: Setup Gradle
-    #   uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
-    #   with:
-    #     gradle-version: '8.5'
-    #
-    # - name: Build with Gradle 8.5
-    #   run: gradle build
-
-  dependency-submission:
-
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 17
-      uses: actions/setup-java@v4
-      with:
-        java-version: '17'
-        distribution: 'temurin'
-
-    # Generates and submits a dependency graph, enabling Dependabot Alerts for all project dependencies.
-    # See: https://github.com/gradle/actions/blob/main/dependency-submission/README.md
-    - name: Generate and submit dependency graph
-      uses: gradle/actions/dependency-submission@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+      # S3 버킷으로 옮길 zip 파일을 생성합니다.
+      - name: ZIP 파일 생성
+        run: zip -qq -r ./$GITHUB_SHA.zip .
+        shell: bash
+      
+      # AWS 계정의 서비스 접근 권한을 획득합니다.
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_PRIVATE_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+      
+      # 생성된 zip 파일을 S3에 업로드 합니다.
+      - name: Upload to S3
+        run: aws s3 cp --region ap-northeast-2 ./$GITHUB_SHA.zip s3://$BUCKET_NAME/$PROJECT_NAME/$GITHUB_SHA.zip
+      
+      # CodeDeploy에 배포요청을 진행합니다.
+      - name: Code Deploy To EC2 instance
+        run: aws deploy create-deployment 
+                --application-name $CODE_DEPLOY_APP_NAME 
+                --deployment-config-name CodeDeployDefault.AllAtOnce
+                --deployment-group-name $DEPLOYMENT_GROUP_NAME 
+                --s3-location bucket=$BUCKET_NAME,bundleType=zip,key=$PROJECT_NAME/$GITHUB_SHA.zip
