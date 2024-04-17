@@ -65,33 +65,89 @@ public class IssuedServiceImpl implements IssuedService {
                 (messageSource.getMessage("noEntity.coupon", null, Locale.KOREA))));
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
     public void decreaseCouponAmountAndProductStock(Long issuedId, Order order) {
         RLock lock = redissonClient.getFairLock(
             "issuedAndProduct:" + issuedId + ":" + order.getProduct().getId());
         try {
-            boolean isLocked = lock.tryLock(60, 90, TimeUnit.SECONDS);
+            boolean isLocked = lock.tryLock(1000, 3000, TimeUnit.SECONDS);
             if (isLocked) {
                 try {
-                    Coupon coupon = issuedRepository.findByIssued(issuedId);
-                    coupon.decreaseAmount();
-                    couponRepository.save(coupon);
-                    Product product = productRepository.findByOrder(order);
-                    long newStock = product.getQuantity() - order.getQuantity();
-                    if (newStock < 0) {
-                        throw new InsufficientQuantityException(
-                            messageSource.getMessage("insufficient.quantity.product", null,
-                                Locale.KOREA));
-                    }
-                    product.quatityUpdate(newStock);
-                    productRepository.save(product);
+//                    Coupon coupon = issuedRepository.findByIssued(issuedId);
+//                    coupon.decreaseAmount();
+//                    couponRepository.save(coupon);
+//                    Product product = productRepository.findByOrder(order);
+//                    long newStock = product.getQuantity() - order.getQuantity();
+//                    if (newStock < 0) {
+//                        throw new InsufficientQuantityException(
+//                            messageSource.getMessage("insufficient.quantity.product", null,
+//                                Locale.KOREA));
+//                    }
+//                    product.quatityUpdate(newStock);
+//                    productRepository.save(product);
+                    decreaseCouponAmountAndProductStockTransaction(issuedId, order);
                 } finally {
                     lock.unlock();
                 }
             }
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             Thread.currentThread().interrupt();
+            System.out.println(e.getMessage());
         }
+    }
+
+    @Transactional
+    public void decreaseCouponAmountAndProductStockTransaction(Long issuedId, Order order) {
+        Coupon coupon = issuedRepository.findByIssued(issuedId);
+        coupon.decreaseAmount();
+        couponRepository.save(coupon);
+        Product product = productRepository.findByOrder(order);
+        long newStock = product.getQuantity() - order.getQuantity();
+        if (newStock < 0) {
+            throw new InsufficientQuantityException(
+                messageSource.getMessage("insufficient.quantity.product", null,
+                    Locale.KOREA));
+        }
+        product.quatityUpdate(newStock);
+        productRepository.save(product);
+    }
+
+    public void decreaseCouponAmount(Long issuedId) {
+        Issued issuedCoupon = issuedRepository.findById(issuedId)
+            .orElseThrow(() -> new InsufficientQuantityException(
+                messageSource.getMessage("insufficient.quantity.coupon",
+                    null, Locale.KOREA)));
+        Long couponId = issuedCoupon.getCoupon().getId();
+        RLock couponLock = redissonClient.getFairLock("coupon:" + couponId);
+        try {
+            try {
+                boolean isCouponLocked = couponLock.tryLock(1000, 3000, TimeUnit.SECONDS);
+                if (isCouponLocked) {
+                    decreaseCouponAmountTransaction(issuedId);
+                }
+            } finally {
+                couponLock.unlock();
+            }
+        } catch (Exception e) {
+            Thread.currentThread().interrupt();
+            System.out.println(e.getMessage());
+        }
+    }
+//            } finally {
+//                lock.unlock();
+//            }
+
+
+    @Transactional
+    public void decreaseCouponAmountTransaction(Long issuedId) {
+        Issued issuedCoupon = issuedRepository.findById(issuedId)
+            .orElseThrow(() -> new IllegalArgumentException("발급된 쿠폰이 없습니다."));
+        Coupon coupon = issuedCoupon.getCoupon();
+        if (coupon.getAmount() > 0) {
+            coupon.decreaseAmount();
+        } else {
+            throw new IllegalArgumentException("쿠폰 재고가 소진되었습니다.");
+        }
+        couponRepository.save(coupon);
     }
 
 
@@ -109,6 +165,13 @@ public class IssuedServiceImpl implements IssuedService {
         RBucket<Issued> cacheBucket = redisConfig.redissonClient()
             .getBucket("IssuedCoupon:" + couponId + ":" + userId);
         cacheBucket.set(issuedCoupon, timeToLive, TimeUnit.MILLISECONDS);
+    }
+
+    public boolean checkCouponStock(Long issuedId, int requiredCouponCount) {
+        Issued issuedCoupon = issuedRepository.findById(issuedId)
+            .orElseThrow(() -> new IllegalArgumentException("발급된 쿠폰이 없습니다."));
+        Long availableCouponCount = issuedCoupon.getCoupon().getAmount();
+        return availableCouponCount >= requiredCouponCount;
     }
 
     private IssuedResponse createIssuedResponse(Long couponId, Coupon coupon, Issued issuedCoupon) {

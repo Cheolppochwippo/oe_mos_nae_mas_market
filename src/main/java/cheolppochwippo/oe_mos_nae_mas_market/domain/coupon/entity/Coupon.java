@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.transaction.annotation.Transactional;
 
 @Entity
 @Getter
@@ -68,13 +69,8 @@ public class Coupon extends TimeStamped {
         this.amount = couponRequest.getAmount();
         this.deleted = Deleted.UNDELETE;
     }
-
     public void decreaseAmount() {
-        if (this.amount > 0) {
             this.amount--;
-        } else {
-            throw new IllegalStateException("Coupon amount cannot be negative");
-        }
     }
 
     public void delete() {
