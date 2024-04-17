@@ -40,6 +40,12 @@ public class RedisConfig {
         Config config = new Config();
         config.useSingleServer().setAddress(REDISSON_HOST_PREFIX + host + ":" + port);
 
+        config.setLockWatchdogTimeout(60000);
+
+        config.useSingleServer().setSubscriptionConnectionPoolSize(1000);
+
+        config.useSingleServer().setSubscriptionConnectionMinimumIdleSize(1000);
+
         return Redisson.create(config);
     }
 
