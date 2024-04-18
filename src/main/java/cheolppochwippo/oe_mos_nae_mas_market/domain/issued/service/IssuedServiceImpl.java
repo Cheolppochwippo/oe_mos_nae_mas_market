@@ -7,6 +7,7 @@ import cheolppochwippo.oe_mos_nae_mas_market.domain.issued.entity.Issued;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.issued.repository.IssuedRepository;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.user.entity.User;
 import cheolppochwippo.oe_mos_nae_mas_market.global.config.RedisConfig;
+import cheolppochwippo.oe_mos_nae_mas_market.global.exception.customException.CouponAlreadyIssuedException;
 import cheolppochwippo.oe_mos_nae_mas_market.global.exception.customException.InsufficientQuantityException;
 import cheolppochwippo.oe_mos_nae_mas_market.global.exception.customException.NoEntityException;
 import java.time.Duration;
@@ -40,7 +41,8 @@ public class IssuedServiceImpl implements IssuedService {
     @CacheEvict(value = "issuedCoupons", key = "#user.id", cacheManager = "cacheManager")
     public IssuedResponse issueCoupon(Long couponId, User user) {
         if (isCouponAlreadyIssued(couponId, user.getId())) {
-            throw new IllegalArgumentException("이미 쿠폰을 발급 받으셨습니다.");
+            throw new CouponAlreadyIssuedException(
+                (messageSource.getMessage("noEntity.coupon", null, Locale.KOREA)));
         }
         Coupon coupon = getCouponById(couponId);
         Issued issuedCoupon = saveIssuedCoupon(coupon, user);
@@ -90,12 +92,15 @@ public class IssuedServiceImpl implements IssuedService {
     @Transactional
     public void decreaseCouponAmountTransaction(Long issuedId) {
         Issued issuedCoupon = issuedRepository.findById(issuedId)
-            .orElseThrow(() -> new IllegalArgumentException("발급된 쿠폰이 없습니다."));
+            .orElseThrow(() -> new NoEntityException(
+                (messageSource.getMessage("noEntity.coupon", null, Locale.KOREA))));
         Coupon coupon = issuedCoupon.getCoupon();
         if (coupon.getAmount() > 0) {
             coupon.decreaseAmount();
         } else {
-            throw new IllegalArgumentException("쿠폰 재고가 소진되었습니다.");
+            throw new InsufficientQuantityException(
+                messageSource.getMessage("insufficient.quantity.coupon",
+                    null, Locale.KOREA));
         }
         couponRepository.save(coupon);
     }
