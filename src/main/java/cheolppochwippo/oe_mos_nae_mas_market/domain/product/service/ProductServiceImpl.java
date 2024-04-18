@@ -119,15 +119,6 @@ public class ProductServiceImpl implements ProductService {
 			try {
 				boolean isLocked = lock.tryLock(1000, 3000, TimeUnit.SECONDS);
 				if (isLocked) {
-//					Product product = productRepository.findByOrder(order);
-//					Long newStock = product.getQuantity() - order.getQuantity();
-//					if (newStock < 0) {
-//						throw new InsufficientQuantityException(
-//							messageSource.getMessage("insufficient.quantity.product", null,
-//								Locale.KOREA));
-//					}
-//					product.quatityUpdate(newStock);
-//					productRepository.save(product);
 					decreaseProductStockTransaction(order);
 				}
 			} finally {
@@ -166,6 +157,6 @@ public class ProductServiceImpl implements ProductService {
 				pageable, searchValue);
 		}
 		return new ProductShowResponse(
-			productList.stream().map(product -> new ProductResultResponse(product)).toList());
+			productList.stream().map(ProductResultResponse::new).toList());
 	}
 }
