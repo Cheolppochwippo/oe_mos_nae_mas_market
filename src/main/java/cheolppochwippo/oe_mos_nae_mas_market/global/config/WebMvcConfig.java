@@ -13,7 +13,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
 
-		String[] allowedOrigins = { "https://fronts-two.vercel.app", "http://fronts-two.vercel.app"};
+		String[] allowedOrigins = { "https://fronts-two.vercel.app", "http://fronts-two.vercel.app","http://localhost:3000"};
 		// 모든 경로에 대해
 		registry.addMapping("/**")
 			// Origin이 http:localhost:3000에 대해
