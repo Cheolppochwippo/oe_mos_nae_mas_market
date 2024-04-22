@@ -11,11 +11,11 @@ public class SingleOrderInCartResponse {
 
     private Long orderId;
 
+    private String productName;
+
     private Long quantity;
 
     private Long price;
-
-    private String merchant;
 
     private Deleted deleted;
 
@@ -25,9 +25,9 @@ public class SingleOrderInCartResponse {
 
     public SingleOrderInCartResponse(Order order) {
         this.orderId = order.getId();
+        this.productName = order.getProduct().getProductName();
         this.quantity = order.getQuantity();
         this.price = order.getPrice();
-        this.merchant = order.getMerchantUid();
         this.deleted = order.getDeleted();
         this.createdAt = order.getCreatedAt();
         this.modifiedAt = order.getModifiedAt();
