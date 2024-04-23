@@ -40,24 +40,17 @@ public class IssuedServiceImpl implements IssuedService {
     @Override
     @CacheEvict(value = "issuedCoupons", key = "#user.id", cacheManager = "cacheManager")
     public IssuedResponse issueCoupon(Long couponId, User user) {
-        if (isCouponAlreadyIssued(couponId, user.getId())) {
+        List<Issued> issuedCoupons = issuedRepository.findByCouponIdAndUser(couponId, user);
+        if (!issuedCoupons.isEmpty()) {
             throw new CouponAlreadyIssuedException(
-                (messageSource.getMessage("noEntity.coupon", null, Locale.KOREA)));
+                (messageSource.getMessage("coupon.alreadyIssued", null, Locale.KOREA)));
         }
         Coupon coupon = getCouponById(couponId);
         Issued issuedCoupon = saveIssuedCoupon(coupon, user);
-        cacheIssuedCoupon(couponId, user.getId(), issuedCoupon, coupon.getEffective_date());
         decreaseCouponAmount(issuedCoupon.getId());
         return createIssuedResponse(couponId, coupon, issuedCoupon);
     }
 
-
-    private boolean isCouponAlreadyIssued(Long couponId, Long userId) {
-        RBucket<Issued> cacheBucket = redisConfig.redissonClient()
-            .getBucket("IssuedCoupon:" + couponId + ":" + userId);
-        Issued issuedCoupon = cacheBucket.get();
-        return issuedCoupon != null;
-    }
 
     private Coupon getCouponById(Long couponId) {
         return couponRepository.findById(couponId)
@@ -109,17 +102,6 @@ public class IssuedServiceImpl implements IssuedService {
     private Issued saveIssuedCoupon(Coupon coupon, User user) {
         Issued issuedCoupon = new Issued(coupon, user);
         return issuedRepository.save(issuedCoupon);
-    }
-
-    private void cacheIssuedCoupon(Long couponId, Long userId, Issued issuedCoupon,
-        LocalDateTime expirationDate) {
-        LocalDateTime currentTime = LocalDateTime.now();
-        Duration duration = Duration.between(currentTime, expirationDate);
-        long timeToLive = duration.toMillis();
-
-        RBucket<Issued> cacheBucket = redisConfig.redissonClient()
-            .getBucket("IssuedCoupon:" + couponId + ":" + userId);
-        cacheBucket.set(issuedCoupon, timeToLive, TimeUnit.MILLISECONDS);
     }
 
 
