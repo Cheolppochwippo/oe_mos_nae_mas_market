@@ -57,7 +57,7 @@ public class WebSecurityConfig {
                         .requestMatchers(PathRequest.toStaticResources().atCommonLocations())
                         .permitAll()
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html","/swagger-ui/index.html").permitAll()
                         .requestMatchers(HttpMethod.GET,"/coupons/**").permitAll()
                         .requestMatchers(HttpMethod.POST,"/coupons/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH,"/coupons/**").hasRole("ADMIN")
