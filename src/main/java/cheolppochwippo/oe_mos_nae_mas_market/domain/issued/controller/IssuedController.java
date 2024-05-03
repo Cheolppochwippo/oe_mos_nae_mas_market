@@ -4,6 +4,8 @@ import cheolppochwippo.oe_mos_nae_mas_market.domain.issued.dto.IssuedResponse;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.issued.service.IssuedService;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.user.userDetails.UserDetailsImpl;
 import cheolppochwippo.oe_mos_nae_mas_market.global.common.CommonResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -14,11 +16,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Issued API", description = "쿠폰 발급 API")
 @RestController
 @RequiredArgsConstructor
 public class IssuedController {
     private final IssuedService issuedService;
 
+    @Operation(summary = "쿠폰 발급", description = "쿠폰 발급")
     @PostMapping("/issued/{couponId}")
     public ResponseEntity<CommonResponse<IssuedResponse>> issueCoupon(
         @PathVariable Long couponId,
@@ -32,6 +36,7 @@ public class IssuedController {
                 .build());
     }
 
+    @Operation(summary = "발급된 내 쿠폰 보기", description = "발급된 내 쿠폰 보기")
     @GetMapping("/issued")
     public ResponseEntity<CommonResponse<List<IssuedResponse>>> getIssuedCoupons(
         @AuthenticationPrincipal UserDetailsImpl userDetails

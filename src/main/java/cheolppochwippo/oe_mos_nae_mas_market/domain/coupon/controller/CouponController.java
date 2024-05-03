@@ -4,6 +4,8 @@ import cheolppochwippo.oe_mos_nae_mas_market.domain.coupon.dto.CouponRequest;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.coupon.dto.CouponResponse;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.coupon.service.CouponService;
 import cheolppochwippo.oe_mos_nae_mas_market.global.common.CommonResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -16,12 +18,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Coupon API", description = "쿠폰 API")
 @RestController
 @RequiredArgsConstructor
 public class CouponController {
 
     private final CouponService couponService;
 
+    @Operation(summary = "쿠폰 생성", description = "쿠폰 생성")
     @PostMapping("/coupons")
     public ResponseEntity<CommonResponse<CouponResponse>> createCoupon(
         @RequestBody CouponRequest couponRequest
@@ -34,6 +38,7 @@ public class CouponController {
                 .build());
     }
 
+    @Operation(summary = "발급 가능한 쿠폰 리스트 확인", description = "발급 가능한 쿠폰 리스트 확인")
     @GetMapping("/coupons")
     public ResponseEntity<CommonResponse<List<CouponResponse>>> getCoupons() {
         List<CouponResponse> couponResponses = couponService.getCoupons();
@@ -44,6 +49,7 @@ public class CouponController {
                 .build());
     }
 
+    @Operation(summary = "쿠폰 수정", description = "쿠폰 수정")
     @PatchMapping("/coupons/{couponId}")
     public ResponseEntity<CommonResponse<CouponResponse>> updateCoupon(
         @PathVariable Long couponId,
@@ -57,6 +63,7 @@ public class CouponController {
                 .build());
     }
 
+    @Operation(summary = "쿠폰 삭제", description = "쿠폰 삭제")
     @DeleteMapping("/coupons/{couponId}")
     public ResponseEntity<CommonResponse<CouponResponse>> deleteCoupon(
         @PathVariable Long couponId

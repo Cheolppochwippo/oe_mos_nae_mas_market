@@ -11,6 +11,8 @@ import cheolppochwippo.oe_mos_nae_mas_market.domain.payment.service.PaymentServi
 import cheolppochwippo.oe_mos_nae_mas_market.domain.totalOrder.entity.TotalOrder;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.user.userDetails.UserDetailsImpl;
 import cheolppochwippo.oe_mos_nae_mas_market.global.common.CommonResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.json.simple.JSONObject;
 import org.springframework.data.domain.Page;
@@ -18,18 +20,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Payment API", description = "결제 API")
 @RestController
 @RequiredArgsConstructor
 public class PaymentController {
 
 	private final PaymentServiceImpl paymentService;
 
-	@RequestMapping(value = "/payments/confirm")
+	@Operation(summary = "결제 승인", description = "결제 승인")
+	@PostMapping(value = "/payments/confirm")
 	public ResponseEntity<CommonResponse<PaymentSuccessResponse>> confirmPayment(
 		@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestBody PaymentRequest request) {
 		PaymentSuccessResponse response = paymentService.confirmPayment(userDetails.getUser(),
@@ -40,7 +45,8 @@ public class PaymentController {
 			.build());
 	}
 
-	@RequestMapping(value = "/payments/cancel")
+	@Operation(summary = "결제 취소", description = "결제 취소")
+	@PostMapping(value = "/payments/cancel")
 	public ResponseEntity<CommonResponse<JSONObject>> cancelPayment(
 		@AuthenticationPrincipal UserDetailsImpl userDetails,
 		@RequestBody PaymentCancelRequest request) {
@@ -51,6 +57,7 @@ public class PaymentController {
 			.build());
 	}
 
+	@Operation(summary = "결제 내역 상세 보기", description = "결제 내역 상세 보기")
 	@GetMapping("/payments/{paymentId}")
 	public ResponseEntity<CommonResponse<PaymentResponse>> getPayment(@PathVariable Long paymentId,
 		@AuthenticationPrincipal UserDetailsImpl userDetails) {
@@ -62,6 +69,7 @@ public class PaymentController {
 			.build());
 	}
 
+	@Operation(summary = "결제 내역 전체 보기", description = "결제 내역 전체 보기")
 	@GetMapping("/payments")
 	public ResponseEntity<CommonResponse<Page<PaymentResponses>>> getPayment(
 		@RequestParam(defaultValue = "1") int page,
@@ -75,7 +83,8 @@ public class PaymentController {
 			.build());
 	}
 
-	@RequestMapping("/payments/confirm/pass")
+	@Operation(summary = "Test용 결제 승인 통과", description = "Test용 결제 승인 통과")
+	@PostMapping("/payments/confirm/pass")
 	public ResponseEntity<CommonResponse<Void>> confirmPassPayment(
 		@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestBody PaymentRequest request) {
 		TotalOrder totalOrder = paymentService.checkPayment(userDetails.getUser(), request);
@@ -87,7 +96,8 @@ public class PaymentController {
 
 	//테스트용 실결제 승인을 제외시킨 결제 내역 생성 api
 	// 같은 주문번호의 결제 내역을 계속생성되는 이유는 제한시키는 로직이 실결제 승인에 있기 때문
-	@RequestMapping("/payments/cancel/pass")
+	@Operation(summary = "Test용 결제 취소 통과", description = "Test용 결제 취소 통과")
+	@PostMapping("/payments/cancel/pass")
 	public ResponseEntity<CommonResponse<Void>> cancelPassPayment(
 		@AuthenticationPrincipal UserDetailsImpl userDetails,
 		@RequestBody PaymentCancelRequest request) {

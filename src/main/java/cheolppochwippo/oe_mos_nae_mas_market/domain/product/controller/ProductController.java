@@ -10,6 +10,8 @@ import cheolppochwippo.oe_mos_nae_mas_market.domain.product.dto.QuantityUpdateRe
 import cheolppochwippo.oe_mos_nae_mas_market.domain.product.service.ProductService;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.user.userDetails.UserDetailsImpl;
 import cheolppochwippo.oe_mos_nae_mas_market.global.common.CommonResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+@Tag(name = "Product API", description = "상품 API")
 @RestController
 @RequiredArgsConstructor
 public class ProductController {
@@ -32,6 +35,7 @@ public class ProductController {
     private final ProductService productService;
 
     //상품추가
+    @Operation(summary = "상품 생성", description = "상품 생성")
     @PostMapping("/stores/products")
     public ResponseEntity<CommonResponse<ProductResponse>> createProduct(
         @RequestBody ProductRequest productRequest,
@@ -47,6 +51,7 @@ public class ProductController {
 
 
     //상품수정
+    @Operation(summary = "상품 수정", description = "상품 수정")
     @PatchMapping("/stores/products/{productId}")
     public ResponseEntity<CommonResponse<ProductResponse>> updateProduct(
         @PathVariable Long productId, @RequestBody ProductUpdateRequest productRequest,
@@ -60,6 +65,7 @@ public class ProductController {
                 .build());
     }
     //상품 재고 수정
+    @Operation(summary = "상품 재고 수정", description = "상품 재고 수정")
     @PatchMapping("/stores/products/quantity")
     public ResponseEntity<CommonResponse<ProductResponse>> updateQuantity(
          @RequestBody QuantityUpdateRequest productRequest,
@@ -74,6 +80,7 @@ public class ProductController {
     }
 
     //상점상품조회
+    @Operation(summary = "상점 상품 조회", description = "상점 상품 조회")
     @GetMapping("/stores/products")
     public ResponseEntity<CommonResponse<ProductShowResponse>> showStoreProduct(
         @RequestParam(defaultValue = "0") int page,
@@ -90,6 +97,7 @@ public class ProductController {
     }
 
     //상품조회
+    @Operation(summary = "상품 상세 조회", description = "상품 상세 조회")
     @GetMapping("/products/{productId}")
     public ResponseEntity<CommonResponse<ProductResultResponse>> showProduct(
         @PathVariable Long productId) {
@@ -102,6 +110,7 @@ public class ProductController {
     }
 
     //상품 전체 조회
+    @Operation(summary = "상품 전체 조회", description = "상품 전체 조회")
     @GetMapping("/products")
     public ResponseEntity<CommonResponse<ProductShowResponse>> showAllProduct(
         @RequestParam(defaultValue = "0") int page,
@@ -115,6 +124,7 @@ public class ProductController {
                 .build());
     }
 
+    @Operation(summary = "상품 검색", description = "상품 검색")
     @GetMapping("/products/search")
     public ResponseEntity<CommonResponse<ProductShowResponse>> showAllProductTest(
         @RequestParam(defaultValue = "0") int page,
@@ -131,6 +141,7 @@ public class ProductController {
     }
 
     //상품 삭제
+    @Operation(summary = "상품 삭제", description = "상품 삭제")
     @DeleteMapping("/products/{productId}")
     public ResponseEntity<CommonResponse<ProductResponse>> deleteProduct(
         @PathVariable Long productId, @AuthenticationPrincipal UserDetailsImpl userDetails) {
@@ -143,6 +154,7 @@ public class ProductController {
                 .build());
     }
 
+    @Operation(summary = "내 상품 조회", description = "내 상품 조회")
     @GetMapping("/product/{productId}")
     public ResponseEntity<CommonResponse<ProductMyResultResponse>> showMyProduct(
         @PathVariable Long productId,@AuthenticationPrincipal UserDetailsImpl userDetails) {
