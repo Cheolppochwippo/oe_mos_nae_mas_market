@@ -16,6 +16,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
+@Table(indexes = {@Index(name = "idx_payment_id",columnList = "id")})
 public class Payment extends TimeStamped {
 
     @Id
