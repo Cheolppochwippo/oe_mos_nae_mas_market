@@ -17,6 +17,7 @@ import cheolppochwippo.oe_mos_nae_mas_market.domain.product.entity.Product;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.product.repository.ProductRepository;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.search.document.ProductDocument;
 //import cheolppochwippo.oe_mos_nae_mas_market.domain.search.repository.ProductSearchRepository;
+import cheolppochwippo.oe_mos_nae_mas_market.domain.search.repository.ProductSearchRepository;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.store.entity.Store;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.store.repository.StoreRepository;
 import cheolppochwippo.oe_mos_nae_mas_market.domain.user.entity.RoleEnum;
@@ -51,7 +52,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductImageRepository productImageRepository;
     private final MessageSource messageSource;
     private final CacheManager cacheManager;
-//    private final ProductSearchRepository productSearchRepository;
+    private final ProductSearchRepository productSearchRepository;
     private final InventoryRepository inventoryRepository;
 
     @Transactional
@@ -67,11 +68,11 @@ public class ProductServiceImpl implements ProductService {
 
         List<String> imageUrls = getProductImageUrls(saveProduct.getId());
 
-//        ProductDocument productDocument = new ProductDocument(store.getStoreName(),
-//            saveProduct.getId(), productRequest.getProductName(), productRequest.getInfo(),
-//            productRequest.getRealPrice(), productRequest.getDiscount(),
-//            productRequest.getQuantity(), imageUrls, Deleted.UNDELETE);
-//        productSearchRepository.save(productDocument);
+        ProductDocument productDocument = new ProductDocument(store.getStoreName(),
+            saveProduct.getId(), productRequest.getProductName(), productRequest.getInfo(),
+            productRequest.getRealPrice(), productRequest.getDiscount(),
+            productRequest.getQuantity(), imageUrls, Deleted.UNDELETE);
+        productSearchRepository.save(productDocument);
 
         return new ProductResponse(product);
     }
@@ -96,7 +97,7 @@ public class ProductServiceImpl implements ProductService {
         User user) {
         validateSeller(user);
         Product product = foundProduct(productId);
-//        deleteProductDocumentFromElasticsearch(productId);
+        deleteProductDocumentFromElasticsearch(productId);
         product.update(productRequest);
         List<ProductImage> imageByProductId = productImageRepository.getImageByProductId(productId);
         ProductResultResponse response = new ProductResultResponse(product, imageByProductId);
@@ -115,7 +116,7 @@ public class ProductServiceImpl implements ProductService {
         productDocument.setDeleted(product.getDeleted());
 
 
-//        productSearchRepository.save(productDocument);
+        productSearchRepository.save(productDocument);
 
         return new ProductResponse(product);
     }
@@ -190,14 +191,14 @@ public class ProductServiceImpl implements ProductService {
         Product product = foundProduct(productId);
         product.delete();
 
-//        deleteProductDocumentFromElasticsearch(productId);
+        deleteProductDocumentFromElasticsearch(productId);
 
         return new ProductResponse(product);
     }
 
-//    private void deleteProductDocumentFromElasticsearch(Long productId) {
-//        productSearchRepository.deleteByProductId(productId);
-//    }
+    private void deleteProductDocumentFromElasticsearch(Long productId) {
+        productSearchRepository.deleteByProductId(productId);
+    }
 
     private Product foundProduct(Long productId) {
         return productRepository.findById(productId)
